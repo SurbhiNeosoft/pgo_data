@@ -3,7 +3,7 @@ name: Flutter iOS PGO Build
 on:
   push:
     branches:
-      - main
+      - workflow
 
 jobs:
   build:
