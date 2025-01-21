@@ -1,0 +1,40 @@
+name: Flutter iOS PGO Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build and Collect Profile Data
+        run: |
+          flutter build ios --profile
+          # Run the app on a physical device or simulator to collect profile data.
+          # Collect the generated .profdata (manual process or via scripts).
+
+      - name: Merge and Optimize with PGO
+        run: |
+          llvm-profdata merge -o merged.profdata *.profraw
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release -archivePath build/Runner.xcarchive \
+          OTHER_LDFLAGS="-fprofile-instr-use=merged.profdata"
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-ipa
+          path: build/ios/ipa
