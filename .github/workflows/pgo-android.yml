@@ -3,40 +3,49 @@ name: Flutter PGO Build
 on:
   push:
     branches:
-      - workflow
+      - main
 
 jobs:
-  build:
+  profile-build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Setup Flutter
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
-        with:
-          flutter-version: 3.24.5
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: flutter pub get
 
-      - name: Generate ART Profile
-        run: |
-          flutter build apk --profile --target-platform android-arm64
-          adb install build/app/outputs/flutter-apk/app-profile.apk
-          adb shell am start -n com.example.pgo_demo/.MainActivity
-          # Simulate user actions here (or automate with tools like Espresso).
-          adb shell kill <app_package_name>
-          adb pull /data/misc/profiles/cur/0/<app_package_name>/primary.prof baseline-prof.txt
+      - name: Build APK (Profile Mode)
+        run: flutter build apk --profile
 
-      - name: Include ART Profile
-        run: |
-          mkdir -p android/app/src/main/baseline-prof
-          mv baseline-prof.txt android/app/src/main/baseline-prof
+      - name: Upload Profile Data
+        uses: actions/upload-artifact@v3
+        with:
+          name: profile-data
+          path: build/app/profile_data.json
 
-      - name: Build Release APK with PGO
-        run: flutter build apk --release --target-platform android-arm64
+  optimize-build:
+    needs: profile-build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+
+      - name: Download Profile Data
+        uses: actions/download-artifact@v3
+        with:
+          name: profile-data
+
+      - name: Build Optimized Release
+        run: flutter build apk --release
 
       - name: Upload APK
         uses: actions/upload-artifact@v3
