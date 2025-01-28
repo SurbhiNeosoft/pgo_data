@@ -20,7 +20,8 @@ jobs:
         run: flutter pub get
 
       - name: Build APK (Profile Mode)
-        run: flutter build apk --profile
+        run:  flutter build apk --profile --target-platform android-arm64
+
 
       - name: Upload Profile Data
         uses: actions/upload-artifact@v3
