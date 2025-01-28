@@ -3,7 +3,7 @@ name: Flutter PGO Build
 on:
   push:
     branches:
-      - main
+      - workflow
 
 jobs:
   profile-build:
